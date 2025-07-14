@@ -57,7 +57,7 @@ async def start(message: types.Message, state: FSMContext):
 
     if not user:
         await message.answer(Texts.START, reply_markup=ReplyKeyboardRemove())
-        await message.answer("Введіть номер вашого особового рахунку:")
+        await message.answer("Введіть номер особового рахунку:")
         await state.set_state(Registration.waiting_for_account_number)
     else:
         await message.answer(Texts.WELLCOME, reply_markup=get_main_menu())
@@ -89,10 +89,10 @@ async def process_address(message: types.Message, state: FSMContext):
     await state.update_data(address=message.text)
 
     await message.answer(
-        "Тепер введіть ваш номер телефону.\n\n"
+        "Тепер введіть номер телефону власника рахунку.\n\n"
         "Ви можете:\n"
         "• Ввести номер вручну (наприклад, +380123456789)\n"
-        "• Натиснути кнопку 'Надіслати мій номер телефону'",
+        "• Натиснути кнопку 'Надіслати номер телефону,якщо Ви власник'",
         reply_markup=get_phone_keyboard()
     )
     await state.set_state(Registration.waiting_for_phone)
