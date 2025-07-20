@@ -7,8 +7,22 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta
 from database import Database
 from utils.reminders import send_reminders
+from aiohttp import web
 
 db = Database(DATABASE_NAME)
+
+# Создаём простой HTTP-эндпоинт
+async def health_check(request):
+    return web.Response(text="OK")
+
+async def start_web_server():
+    app = web.Application()
+    app.router.add_get('/health', health_check)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', 8080)  # Render использует порт 8080
+    await site.start()
+    print("HTTP-сервер запущен на порту 8080")
 
 async def main():
     bot = Bot(token=BOT_TOKEN)
@@ -22,11 +36,14 @@ async def main():
     scheduler.add_job(
         send_reminders,
         "interval",
-        days=1,  # Проверяем каждый день
+        days=1,
         args=(bot,),
-        next_run_time=datetime.now() + timedelta(seconds=10)  # Первое напоминание через 10 секунд
+        next_run_time=datetime.now() + timedelta(seconds=10)
     )
     scheduler.start()
+
+    # Запускаем веб-сервер для health check
+    asyncio.create_task(start_web_server())
 
     print("Бот запущен!")
     await dp.start_polling(bot)
