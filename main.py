@@ -1,8 +1,9 @@
 import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
+from aiogram.client.default import DefaultBotProperties  # Импортируем DefaultBotProperties
 from handlers.user_handlers import router as user_router
-from handlers.admin_handlers import router as admin_router  # Предполагается, что admin_main.py перенесён в admin_handlers.py
+from handlers.admin_handlers import router as admin_router
 from config import BOT_TOKEN, ADMIN_TOKEN, DATABASE_NAME
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta
@@ -27,9 +28,9 @@ async def start_web_server():
     print("HTTP-сервер запущен на порту 8080")
 
 async def main():
-    # Инициализация обоих ботов
-    user_bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.HTML)
-    admin_bot = Bot(token=ADMIN_TOKEN)
+    # Инициализация обоих ботов с DefaultBotProperties
+    user_bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    admin_bot = Bot(token=ADMIN_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher()
 
     # Регистрируем роутеры
