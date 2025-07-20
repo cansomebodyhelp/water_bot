@@ -2,7 +2,8 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from handlers.user_handlers import router as user_router
-from config import BOT_TOKEN, DATABASE_NAME
+from handlers.admin_handlers import router as admin_router  # Предполагается, что admin_main.py перенесён в admin_handlers.py
+from config import BOT_TOKEN, ADMIN_TOKEN, DATABASE_NAME
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta
 from database import Database
@@ -11,8 +12,9 @@ from aiohttp import web
 
 db = Database(DATABASE_NAME)
 
-# Создаём простой HTTP-эндпоинт
+# HTTP-эндпоинт для health check
 async def health_check(request):
+    print(f"[HEALTH CHECK] Received request at {datetime.now()}")
     return web.Response(text="OK")
 
 async def start_web_server():
@@ -25,11 +27,14 @@ async def start_web_server():
     print("HTTP-сервер запущен на порту 8080")
 
 async def main():
-    bot = Bot(token=BOT_TOKEN)
+    # Инициализация обоих ботов
+    user_bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.HTML)
+    admin_bot = Bot(token=ADMIN_TOKEN)
     dp = Dispatcher()
 
     # Регистрируем роутеры
     dp.include_router(user_router)
+    dp.include_router(admin_router)
 
     # Инициализируем планировщик
     scheduler = AsyncIOScheduler()
@@ -37,16 +42,17 @@ async def main():
         send_reminders,
         "interval",
         days=1,
-        args=(bot,),
+        args=(user_bot,),
         next_run_time=datetime.now() + timedelta(seconds=10)
     )
     scheduler.start()
 
-    # Запускаем веб-сервер для health check
+    # Запускаем веб-сервер
     asyncio.create_task(start_web_server())
 
     print("Бот запущен!")
-    await dp.start_polling(bot)
+    # Запускаем оба бота в одном Dispatcher
+    await dp.start_polling(user_bot, admin_bot)
 
 if __name__ == "__main__":
     try:
